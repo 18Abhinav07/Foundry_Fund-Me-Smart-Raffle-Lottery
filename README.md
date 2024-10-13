@@ -1,66 +1,22 @@
-## Foundry
+## ADVANCED FOUNDRY COURSE _PROJECTS_ NOTES
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+```sh
+require(<condition>, "error");
 
-Foundry consists of:
-
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
 ```
 
-### Test
+is less gas efficient than using custom reverts and errors.
 
-```shell
-$ forge test
+```sh
+    require(<condition>, <custom-revert-error>);
 ```
 
-### Format
+is much more efficient but is on newer sol verisons.
 
-```shell
-$ forge fmt
+```sh
+    if(<condition>){
+        revert <error>;
+    }
 ```
 
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+is best in terms of efficiency.
