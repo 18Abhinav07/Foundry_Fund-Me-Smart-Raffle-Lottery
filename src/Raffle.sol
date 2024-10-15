@@ -23,6 +23,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         uint256 numPlayers,
         uint256 raffleState
     );
+
     error Raffle__SendMoreToEnterRaffle();
     error Raffle__TransferFailed();
     error Raffle__NotOpen();
@@ -138,14 +139,17 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     function checkUpkeep(
         bytes memory /* checkData */
-        // Due to a function argument in a contract called inside a contract cannot be calldata
-        // thus we need to use memory so that we can pass a empty string otherwise implicit
-        //conversion not possible.
     )
         public
         view
         override
-        returns (bool upkeepNeeded, bytes memory /* performData */)
+        returns (
+            // Due to a function argument in a contract called inside a contract cannot be calldata
+            // thus we need to use memory so that we can pass a empty string otherwise implicit
+            //conversion not possible.
+            bool upkeepNeeded,
+            bytes memory /* performData */
+        )
     {
         bool isOpen = RaffleState.OPEN == s_raffleState;
         bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
@@ -160,8 +164,8 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
      * and it kicks off a Chainlink VRF call to get a random winner.
      */
 
-    function performUpkeep(bytes calldata /*performData*/) external override {
-        (bool upkeepNeeded, ) = checkUpkeep('');
+    function performUpkeep(bytes memory /*performData*/) external override {
+        (bool upkeepNeeded, ) = checkUpkeep("");
 
         if (!upkeepNeeded) {
             revert Raffle__UpkeepNotNeeded(
@@ -261,4 +265,13 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     function getNumberOfPlayers() public view returns (uint256) {
         return s_players.length;
     }
+
+    /*----------------
+    |SETTER FUNCTIONS|
+    -----------------*/
+
+    // --> setters are not good idea as they compromise private vars thus we can use something else.
+    // function setRaffleState(RaffleState _state) external {
+    //     s_raffleState = _state;
+    // }
 }
