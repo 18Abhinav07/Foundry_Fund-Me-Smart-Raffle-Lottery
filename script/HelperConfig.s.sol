@@ -7,6 +7,8 @@ import {console} from "../lib/forge-std/src/console.sol";
 import {Raffle} from "src/Raffle.sol";
 
 import {VRFCoordinatorV2_5Mock} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {LinkToken} from "../test/mocks/LinkToken.sol";
+import {MockAutomationRegistrar} from "src/MockAutomationRegistrar.sol";
 
 /**
  * @title Helper Config
@@ -15,7 +17,6 @@ import {VRFCoordinatorV2_5Mock} from "../lib/chainlink-brownie-contracts/contrac
  * used to put the contract on testing and further deployment.
  * @dev -
  */
-
 abstract contract CodeConstants {
     /* MOCK VRF CONSTANTS */
     uint96 public constant baseFee = 0.25 ether;
@@ -26,6 +27,9 @@ abstract contract CodeConstants {
     uint256 public constant ETH_MAINNET_CHAIN_ID = 1;
     uint256 public constant ETH_SEPOLIA_CHAIN_ID = 11155111;
     uint256 public constant ETH_LOCAL_CHAIN_ID = 31337;
+
+    address public FOUNDRY_DEFAULT_SENDER =
+        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 }
 
 contract HelperConfig is CodeConstants, Script {
@@ -48,6 +52,7 @@ contract HelperConfig is CodeConstants, Script {
         address vrfCoordinatorV2_5;
         address link;
         address account;
+        address automationRegistry;
     }
 
     NetworkConfig private currentNetworkConfig;
@@ -89,8 +94,9 @@ contract HelperConfig is CodeConstants, Script {
             raffleEntranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinatorV2_5: 0x271682DEB8C4E0901D1a1550aD2e64D568E69909,
-            link: address(0),
-            account: address(0)
+            link: 0x514910771AF9Ca656af840dff83E8264EcF986CA,
+            account: 0xF947782C0CB4d3afa57912DA235894563950E2F4,
+            automationRegistry: 0x02777053d6764996e594c3E88AF1D58D5363a2e6
         });
     }
 
@@ -106,8 +112,9 @@ contract HelperConfig is CodeConstants, Script {
             raffleEntranceFee: 0.01 ether, // 1e16
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinatorV2_5: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
-            link: address(0), // You can update the LINK token address as needed
-            account: address(0) // Owner account
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+            account: 0xF947782C0CB4d3afa57912DA235894563950E2F4, // Owner account
+            automationRegistry: 0xE16Df59B887e3Caa439E0b29B42bA2e7976FD8b2
         });
     }
 
@@ -125,17 +132,23 @@ contract HelperConfig is CodeConstants, Script {
             gasPrice,
             weiPerUnitLink
         );
+
+        LinkToken linkToken = new LinkToken();
+        MockAutomationRegistrar mockRegistrar = new MockAutomationRegistrar();
+        uint256 subscriptionId = mockVRFcoordinator.createSubscription();
         vm.stopBroadcast();
 
         localNetworkConfig = NetworkConfig({
-            subscriptionId: 0, // For local testing, this can be 0
+            subscriptionId: subscriptionId, // For local testing, this can be 0
             gasLane: 0x0000000000000000000000000000000000000000000000000000000000000000, // Placeholder gas lane
             automationUpdateInterval: 30, // 30 seconds
             raffleEntranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinatorV2_5: address(mockVRFcoordinator), // Mock VRF coordinator for local testing
-            link: address(0), // You can update with the local LINK token mock
-            account: address(0) // You can update with a test account if needed
+            link: address(linkToken), // You can update with the local LINK token mock
+            account: FOUNDRY_DEFAULT_SENDER, // You can update with a test account if needed
+            automationRegistry: address(mockRegistrar)
         });
+        vm.deal(localNetworkConfig.account, 100 ether);
     }
 }

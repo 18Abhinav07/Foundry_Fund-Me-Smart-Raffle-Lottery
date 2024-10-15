@@ -5,10 +5,13 @@ pragma solidity ^0.8.0;
 import {Script} from "../lib/forge-std/src/Script.sol";
 import {console} from "lib/forge-std/src/console.sol";
 import {Raffle} from "src/Raffle.sol";
-import {HelperConfig , CodeConstants} from "./HelperConfig.s.sol";
+import {HelperConfig, CodeConstants} from "./HelperConfig.s.sol";
 import {CodeConstants} from "./HelperConfig.s.sol";
 
-import {CreateSubscription} from "./Interactions.s.sol";
+import {CreateSubscription, FundSubscription, AddConsumer} from "./Interactions.s.sol";
+
+import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
+import {AutomationRegistryInterface} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/automation/interfaces/v2_0/AutomationRegistryInterface2_0.sol";
 
 /**
  * @title Deploy Raffle
@@ -16,7 +19,6 @@ import {CreateSubscription} from "./Interactions.s.sol";
  * @notice Deployment Script for Raffle.sol
  * @dev -
  */
-
 contract DeployRaffle is Script, CodeConstants {
     /* RUN called 
     --> helper deployment function 
@@ -37,17 +39,24 @@ contract DeployRaffle is Script, CodeConstants {
         // create a subscription and a consumer if the nettworkConfig has subscriptionId is 0.
         if (config.subscriptionId == 0) {
             CreateSubscription contractSubscription = new CreateSubscription();
-            (uint256 subId, address vrfCoordinatorV2_5) = contractSubscription
-                .createSubscription(config.vrfCoordinatorV2_5);
+            uint256 subId = contractSubscription.createSubscription(
+                config.vrfCoordinatorV2_5,
+                config.account
+            );
 
             config.subscriptionId = subId;
-            config.vrfCoordinatorV2_5 = vrfCoordinatorV2_5;
-
-            // fund the subscription.
-        
         }
+        // fund the subscription.
 
-        vm.startBroadcast();
+        FundSubscription contractFundSubscription = new FundSubscription();
+        contractFundSubscription.fundSubscription(
+            config.subscriptionId,
+            config.vrfCoordinatorV2_5,
+            config.link,
+            config.account
+        );
+
+        vm.startBroadcast(config.account);
 
         Raffle currentRaffle = new Raffle(
             config.raffleEntranceFee,
@@ -57,9 +66,55 @@ contract DeployRaffle is Script, CodeConstants {
             config.subscriptionId,
             config.callbackGasLimit
         );
-
         vm.stopBroadcast();
+
+        // registerForAutomation(currentRaffle, config);
+
+        AddConsumer addConsumer = new AddConsumer();
+        addConsumer.addConsumer(
+            address(currentRaffle),
+            config.vrfCoordinatorV2_5,
+            config.subscriptionId,
+            config.account
+        );
+
+        // add a consumer that will be using the VRF, this will be the contract itself.
+        // does not need to be broadcasted, as we have broadcasting in the addConsumer function.
 
         return (currentRaffle, helperConfig);
     }
+
+    //     function registerForAutomation(
+    //         Raffle raffle,
+    //         HelperConfig.NetworkConfig memory networkConfig
+    //     ) public {
+    //         uint256 automationFee = 5 * 10 ** 18; // 5 LINK
+
+    //         vm.startBroadcast(networkConfig.account);
+
+    //         LinkTokenInterface linkToken = LinkTokenInterface(networkConfig.link);
+    //         AutomationRegistryInterface registry = AutomationRegistryInterface(
+    //             networkConfig.automationRegistry
+    //         );
+
+    //         // Approve the registry to spend LINK
+    //         linkToken.approve(address(registry), automationFee);
+
+    //         // Encode the checkUpkeep function signature
+    //         bytes memory checkData = abi.encode("");
+
+    //         // Register the Raffle contract for automation
+    //         uint256 upkeepId = registry.registerUpkeep(
+    //             address(raffle),
+    //             2500000, // Gas limit for performUpkeep
+    //             networkConfig.account,
+    //             checkData,
+    //             "" // offchainConfig, empty for now
+    //         );
+
+    //         console.log("Upkeep registered with ID: ", upkeepId);
+
+    //         vm.stopBroadcast();
+    //     }
+    //
 }

@@ -1,22 +1,8 @@
-## ADVANCED FOUNDRY COURSE _PROJECTS_ NOTES
+## ADVANCED FOUNDRY COURSE - SmartContractLottery
 
-```sh
-require(<condition>, "error");
+-> Built a simple raffle system that used chainlink VRF and automation to function.
 
-```
+-> Follow up the makefile (make install) to get all the relevant dependencies.
 
-is less gas efficient than using custom reverts and errors.
+-> Planned for a testnet full game deployment for sepolia eth lottery.
 
-```sh
-    require(<condition>, <custom-revert-error>);
-```
-
-is much more efficient but is on newer sol verisons.
-
-```sh
-    if(<condition>){
-        revert <error>;
-    }
-```
-
-is best in terms of efficiency.
