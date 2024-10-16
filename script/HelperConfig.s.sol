@@ -8,7 +8,6 @@ import {Raffle} from "src/Raffle.sol";
 
 import {VRFCoordinatorV2_5Mock} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 import {LinkToken} from "../test/mocks/LinkToken.sol";
-import {MockAutomationRegistrar} from "src/MockAutomationRegistrar.sol";
 
 /**
  * @title Helper Config
@@ -52,7 +51,6 @@ contract HelperConfig is CodeConstants, Script {
         address vrfCoordinatorV2_5;
         address link;
         address account;
-        address automationRegistry;
     }
 
     NetworkConfig private currentNetworkConfig;
@@ -95,8 +93,7 @@ contract HelperConfig is CodeConstants, Script {
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinatorV2_5: 0x271682DEB8C4E0901D1a1550aD2e64D568E69909,
             link: 0x514910771AF9Ca656af840dff83E8264EcF986CA,
-            account: 0xF947782C0CB4d3afa57912DA235894563950E2F4,
-            automationRegistry: 0x02777053d6764996e594c3E88AF1D58D5363a2e6
+            account: 0xF947782C0CB4d3afa57912DA235894563950E2F4
         });
     }
 
@@ -113,8 +110,7 @@ contract HelperConfig is CodeConstants, Script {
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinatorV2_5: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
             link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
-            account: 0xF947782C0CB4d3afa57912DA235894563950E2F4, // Owner account
-            automationRegistry: 0xE16Df59B887e3Caa439E0b29B42bA2e7976FD8b2
+            account: 0xF947782C0CB4d3afa57912DA235894563950E2F4 // Owner account
         });
     }
 
@@ -126,7 +122,7 @@ contract HelperConfig is CodeConstants, Script {
             return networkConfigs[ETH_LOCAL_CHAIN_ID];
         }
 
-        vm.startBroadcast();
+        vm.startBroadcast(FOUNDRY_DEFAULT_SENDER);
         VRFCoordinatorV2_5Mock mockVRFcoordinator = new VRFCoordinatorV2_5Mock(
             baseFee,
             gasPrice,
@@ -134,20 +130,17 @@ contract HelperConfig is CodeConstants, Script {
         );
 
         LinkToken linkToken = new LinkToken();
-        MockAutomationRegistrar mockRegistrar = new MockAutomationRegistrar();
-        uint256 subscriptionId = mockVRFcoordinator.createSubscription();
         vm.stopBroadcast();
 
         localNetworkConfig = NetworkConfig({
-            subscriptionId: subscriptionId, // For local testing, this can be 0
+            subscriptionId: 0, 
             gasLane: 0x0000000000000000000000000000000000000000000000000000000000000000, // Placeholder gas lane
             automationUpdateInterval: 30, // 30 seconds
             raffleEntranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinatorV2_5: address(mockVRFcoordinator), // Mock VRF coordinator for local testing
             link: address(linkToken), // You can update with the local LINK token mock
-            account: FOUNDRY_DEFAULT_SENDER, // You can update with a test account if needed
-            automationRegistry: address(mockRegistrar)
+            account: FOUNDRY_DEFAULT_SENDER // You can update with a test account if needed
         });
         vm.deal(localNetworkConfig.account, 100 ether);
     }

@@ -10,9 +10,6 @@ import {CodeConstants} from "./HelperConfig.s.sol";
 
 import {CreateSubscription, FundSubscription, AddConsumer} from "./Interactions.s.sol";
 
-import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
-import {AutomationRegistryInterface} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/automation/interfaces/v2_0/AutomationRegistryInterface2_0.sol";
-
 /**
  * @title Deploy Raffle
  * @author Abhinav Pangaria
@@ -25,8 +22,12 @@ contract DeployRaffle is Script, CodeConstants {
     --> Helper config object 
     --> deploy raffle with the data.*/
 
-    function run() external {
-        deployContract();
+    function run()
+        external
+        returns (Raffle t_raffle, HelperConfig t_helperConfig)
+    {
+        (t_raffle, t_helperConfig) = deployContract();
+        return (t_raffle, t_helperConfig);
     }
 
     function deployContract() public returns (Raffle, HelperConfig) {
@@ -83,38 +84,4 @@ contract DeployRaffle is Script, CodeConstants {
 
         return (currentRaffle, helperConfig);
     }
-
-    //     function registerForAutomation(
-    //         Raffle raffle,
-    //         HelperConfig.NetworkConfig memory networkConfig
-    //     ) public {
-    //         uint256 automationFee = 5 * 10 ** 18; // 5 LINK
-
-    //         vm.startBroadcast(networkConfig.account);
-
-    //         LinkTokenInterface linkToken = LinkTokenInterface(networkConfig.link);
-    //         AutomationRegistryInterface registry = AutomationRegistryInterface(
-    //             networkConfig.automationRegistry
-    //         );
-
-    //         // Approve the registry to spend LINK
-    //         linkToken.approve(address(registry), automationFee);
-
-    //         // Encode the checkUpkeep function signature
-    //         bytes memory checkData = abi.encode("");
-
-    //         // Register the Raffle contract for automation
-    //         uint256 upkeepId = registry.registerUpkeep(
-    //             address(raffle),
-    //             2500000, // Gas limit for performUpkeep
-    //             networkConfig.account,
-    //             checkData,
-    //             "" // offchainConfig, empty for now
-    //         );
-
-    //         console.log("Upkeep registered with ID: ", upkeepId);
-
-    //         vm.stopBroadcast();
-    //     }
-    //
 }
